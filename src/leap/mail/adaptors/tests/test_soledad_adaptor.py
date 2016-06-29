@@ -31,6 +31,7 @@ from leap.mail.tests.common import SoledadTestMixin
 from email.MIMEMultipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
 # DEBUG
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -68,6 +69,7 @@ class SoledadDocWrapperTestCase(SoledadTestMixin):
     """
     Tests for the SoledadDocumentWrapper.
     """
+
     def assert_num_docs(self, num, docs):
         self.assertEqual(len(docs[1]), num)
 
@@ -159,6 +161,7 @@ class SoledadDocWrapperTestCase(SoledadTestMixin):
             def add_to_list(wrapper):
                 wrapper_list.append(wrapper)
                 return wrapper
+
             wrapper = CharacterWrapper.get_or_create(
                 store, 'by-name', 'bob')
             wrapper.addCallback(add_to_list)
@@ -275,6 +278,7 @@ class SoledadDocWrapperTestCase(SoledadTestMixin):
         d.addCallback(assert_actor_list_is_expected)
         return d
 
+
 HERE = os.path.split(os.path.abspath(__file__))[0]
 
 
@@ -332,6 +336,25 @@ class SoledadMailAdaptorTestCase(SoledadTestMixin):
                          subject)
         self.assertEqual(msg.wrapper.hdoc.subject, subject)
         self.assertEqual(msg.wrapper.cdocs[1].phash, phash)
+
+    def test_get_rfc_message_delivery_status_multi_part_bounce_from_file(self):
+        adaptor = self.get_adaptor()
+
+        with open(os.path.join(HERE, "multi_part.bounce")) as f:
+            raw = f.read()
+
+        msg = adaptor.get_msg_from_string(TestMessageClass, raw)
+        expected_delivery_status_part = {'multi': True, 'ctype': 'message/delivery-status',
+                                         'headers': [('Content-Description', 'Delivery report'),
+                                                     ('Content-Type', 'message/delivery-status')], 'parts': 2,
+                                         'phash': None, 'size': 529}
+        expected_rfc822_part = {'multi': True, 'ctype': 'message/rfc822',
+                                'headers': [('Content-Description', 'Undelivered Message'),
+                                            ('Content-Type', 'message/rfc822')], 'parts': 1, 'phash': None,
+                                'size': 4882}
+
+        self.assertEqual(expected_delivery_status_part, msg.wrapper.hdoc.part_map['2'])
+        self.assertEqual(expected_rfc822_part, msg.wrapper.hdoc.part_map['3']['part_map']['1'])
 
     def test_get_msg_from_string_multipart(self):
         msg = MIMEMultipart()
@@ -431,6 +454,7 @@ class SoledadMailAdaptorTestCase(SoledadTestMixin):
             def assert_doc_has_flags(doc):
                 self.assertEqual(doc.content['flags'],
                                  ['This', 'That'])
+
             wrapper = msg.get_wrapper()
             d = adaptor.store.get_doc(wrapper.fdoc.doc_id)
             d.addCallback(assert_doc_has_flags)
@@ -494,6 +518,7 @@ class SoledadMailAdaptorTestCase(SoledadTestMixin):
             def assert_doc_has_flags(doc):
                 self.assertEqual(doc.content['subscribed'], True)
                 self.assertEqual(doc.content['closed'], True)
+
             d = adaptor.store.get_doc(wrapper.doc_id)
             d.addCallback(assert_doc_has_flags)
             return d

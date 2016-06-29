@@ -1205,6 +1205,7 @@ def _split_into_parts(raw):
 
 
 def _parse_msg(raw):
+    # raw = raw.replace("message/delivery-status", "plain/text").replace("message/rfc822", "plain/text")
     msg = message_from_string(raw)
     parts = walk.get_parts(msg)
     chash = walk.get_hash(raw)
